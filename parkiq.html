@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ParkIQ — AI Smart Pricing Platform</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f3;
+      --surface: #ffffff;
+      --surface2: #f0eff5;
+      --border: rgba(0,0,0,0.1);
+      --border-md: rgba(0,0,0,0.18);
+      --text: #12112a;
+      --text-muted: #6b6a7a;
+      --blue: #185FA5;
+      --blue-light: #E6F1FB;
+      --blue-dark: #0C447C;
+      --green: #0F6E56;
+      --green-light: #E1F5EE;
+      --coral: #993C1D;
+      --coral-light: #FAECE7;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { font-size: 17px; font-weight: 600; color: var(--text); }
+    .brand span { color: var(--blue); }
+    .nav-meta { font-size: 12px; color: var(--text-muted); }
+
+    /* LAYOUT */
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .tab {
+      padding: 8px 18px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-md);
+      font-size: 13px;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text-muted);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .tab:hover:not(.active) { background: var(--surface2); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* METRICS */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+    .metric {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+    }
+    .metric-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .metric-val { font-size: 26px; font-weight: 600; color: var(--text); }
+    .metric-val.up { color: var(--green); }
+    .metric-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* CHART */
+    .chart-wrap {
+      background: var(--surface2);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
+    .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .bar-pair { display: flex; gap: 3px; align-items: flex-end; }
+    .bar { border-radius: 3px 3px 0 0; transition: height 0.3s; }
+    .bar.demand { background: #B5D4F4; width: 14px; }
+    .bar.price  { background: var(--blue); width: 14px; }
+    .bar-label  { font-size: 10px; color: var(--text-muted); }
+    .legend { display: flex; gap: 16px; margin-top: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* SLIDERS */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+    .slider-label { font-size: 13px; color: var(--text-muted); min-width: 140px; }
+    .slider-val { font-size: 13px; font-weight: 600; min-width: 60px; text-align: right; color: var(--text); }
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      background: var(--border-md);
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px var(--blue);
+    }
+
+    /* SELECTS */
+    select {
+      flex: 1;
+      padding: 8px 12px;
+      border: 0.5px solid var(--border-md);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus { border-color: var(--blue); }
+    .select-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+    .select-row label { font-size: 13px; color: var(--text-muted); min-width: 120px; }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge.peak   { background: var(--coral-light); color: var(--coral); }
+    .badge.normal { background: var(--green-light); color: var(--green); }
+    .badge.low    { background: var(--blue-light);  color: var(--blue-dark); }
+
+    /* AI OUTPUT */
+    .ai-output {
+      background: var(--surface2);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text);
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
+    .ai-output.loading { color: var(--text-muted); font-style: italic; }
+
+    /* BUTTONS */
+    .btn {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 10px 22px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-top: 1rem;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent;
+      color: var(--blue);
+      border: 0.5px solid var(--blue);
+      border-radius: var(--radius-md);
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-outline:hover { background: var(--blue-light); }
+
+    /* SEGMENTS */
+    .segment-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1.25rem;
+    }
+    .seg-card {
+      background: var(--surface2);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+    }
+    .seg-name { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .seg-pct  { font-size: 24px; font-weight: 600; color: var(--text); }
+    .seg-bar-track { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; }
+    .seg-bar-fill  { height: 4px; border-radius: 2px; }
+
+    /* TOGGLES */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 14px; color: var(--text); }
+    .toggle {
+      width: 38px; height: 22px;
+      border-radius: 11px;
+      background: var(--border-md);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: var(--blue); }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: white;
+      top: 3px; left: 3px;
+      transition: transform 0.2s;
+    }
+    .toggle.on::after { transform: translateX(16px); }
+
+    /* DIVIDER */
+    .divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 1rem 0;
+    }
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* PRICE HIGHLIGHT */
+    .price-big {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--blue);
+    }
+
+    /* API KEY BANNER */
+    .api-banner {
+      background: var(--blue-light);
+      border: 0.5px solid var(--blue);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1.2rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--blue-dark);
+    }
+    .api-banner input {
+      flex: 1;
+      border: 0.5px solid var(--blue);
+      border-radius: var(--radius-md);
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+    }
+
+    @media (max-width: 600px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .segment-grid { grid-template-columns: 1fr; }
+      .slider-label { min-width: 100px; font-size: 12px; }
+      nav { padding: 0 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span>Park</span>IQ — AI Smart Pricing Platform</div>
+  <div class="nav-meta">Team B · Deloitte Digital Camp 2026</div>
+</nav>
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+    <div class="tab" onclick="switchTab('ai')">🤖 AI Pricing Engine</div>
+    <div class="tab" onclick="switchTab('consumer')">👥 Consumer Analysis</div>
+    <div class="tab" onclick="switchTab('settings')">⚙️ Platform Settings</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 1 — DASHBOARD
+  ═══════════════════════════════════════════ -->
+  <div class="panel active" id="tab-dashboard">
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Today's Revenue</div>
+        <div class="metric-val up" id="rev">¥284,500</div>
+        <div class="metric-sub">↑ 12% vs last week</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Visitors Today</div>
+        <div class="metric-val" id="vis">12,840</div>
+        <div class="metric-sub">Capacity: 74%</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Avg Ticket Price</div>
+        <div class="metric-val up" id="atp">¥221</div>
+        <div class="metric-sub">Dynamic rate active</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Bundle Attach Rate</div>
+        <div class="metric-val">38%</div>
+        <div class="metric-sub">↑ 4pp vs baseline</div>
+      </div>
+    </div>
+
+    <div class="section-title">Demand vs. price index — past 7 days</div>
+    <div class="chart-wrap">
+      <div class="chart-bars" id="chart-bars"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#B5D4F4"></div>Demand index</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Price index</div>
+      </div>
+    </div>
+
+    <div class="section-title">Live pricing signals</div>
+    <div class="card">
+      <div class="row-between" style="margin-bottom:1.25rem;">
+        <span style="font-size:15px;font-weight:600;">This weekend forecast</span>
+        <span class="badge peak">Peak demand</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Weather forecast</span>
+        <input type="range" min="0" max="2" step="1" value="1" id="weather-sl" oninput="updateDash()">
+        <span class="slider-val" id="weather-out">Cloudy</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Holiday multiplier</span>
+        <input type="range" min="1.0" max="3.0" step="0.1" value="1.5" id="holiday-sl" oninput="updateDash()">
+        <span class="slider-val" id="holiday-out">1.5×</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Competitor price</span>
+        <input type="range" min="150" max="350" step="10" value="240" id="comp-sl" oninput="updateDash()">
+        <span class="slider-val" id="comp-out">¥240</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Crowd capacity</span>
+        <input type="range" min="10" max="100" step="5" value="74" id="cap-sl" oninput="updateDash()">
+        <span class="slider-val" id="cap-out">74%</span>
+      </div>
+      <hr class="divider">
+      <div class="row-between">
+        <span style="font-size:14px;color:var(--text-muted);">Recommended ticket price</span>
+        <span class="price-big" id="rec-price">¥258</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 2 — AI ENGINE
+  ═══════════════════════════════════════════ -->
+  <div class="panel" id="tab-ai">
+
+    <div class="api-banner">
+      <span>🔑 Anthropic API Key</span>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+      <button class="btn-outline" onclick="saveKey()">Save</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Scenario inputs</div>
+      <div class="select-row">
+        <label>Day type</label>
+        <select id="day-type">
+          <option>Weekday</option>
+          <option>Weekend</option>
+          <option>Public holiday</option>
+          <option>School holiday</option>
+        </select>
+      </div>
+      <div class="select-row">
+        <label>Weather</label>
+        <select id="weather-ai">
+          <option>Sunny</option>
+          <option>Partly cloudy</option>
+          <option>Rainy</option>
+          <option>Extreme heat</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Expected crowd</span>
+        <input type="range" min="10" max="100" step="5" value="60" id="crowd-sl" oninput="document.getElementById('crowd-out').textContent=this.value+'%'">
+        <span class="slider-val" id="crowd-out">60%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Season index</span>
+        <input type="range" min="1" max="5" step="1" value="3" id="season-sl" oninput="document.getElementById('season-out').textContent=['Low','Below avg','Average','Above avg','Peak'][this.value-1]">
+        <span class="slider-val" id="season-out">Average</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Competitor price</span>
+        <input type="range" min="150" max="400" step="10" value="250" id="comp-ai" oninput="document.getElementById('comp-ai-out').textContent='¥'+this.value">
+        <span class="slider-val" id="comp-ai-out">¥250</span>
+      </div>
+      <button class="btn" id="gen-btn" onclick="generateRecommendation()">Generate AI recommendation →</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">AI recommendation</div>
+      <div class="ai-output" id="ai-output">Adjust the inputs above and click generate to receive a real-time pricing recommendation powered by Claude AI.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 3 — CONSUMER ANALYSIS
+  ═══════════════════════════════════════════ -->
+  <div class="panel" id="tab-consumer">
+
+    <div class="section-title">Visitor segment breakdown</div>
+    <div class="segment-grid">
+      <div class="seg-card">
+        <div class="seg-name">Families</div>
+        <div class="seg-pct">38%</div>
+        <div class="seg-bar-track"><div class="seg-bar-fill" style="width:38%;background:var(--blue)"></div></div>
+      </div>
+      <div class="seg-card">
+        <div class="seg-name">Young adults (19–35)</div>
+        <div class="seg-pct">29%</div>
+        <div class="seg-bar-track"><div class="seg-bar-fill" style="width:29%;background:#5DCAA5"></div></div>
+      </div>
+      <div class="seg-card">
+        <div class="seg-name">School groups</div>
+        <div class="seg-pct">18%</div>
+        <div class="seg-bar-track"><div class="seg-bar-fill" style="width:18%;background:#7F77DD"></div></div>
+      </div>
+      <div class="seg-card">
+        <div class="seg-name">International tourists</div>
+        <div class="seg-pct">15%</div>
+        <div class="seg-bar-track"><div class="seg-bar-fill" style="width:15%;background:#EF9F27"></div></div>
+      </div>
+    </div>
+
+    <div class="section-title">Willingness-to-pay (WTP) by segment</div>
+    <div class="card">
+      <div class="slider-row">
+        <span class="slider-label">Families</span>
+        <input type="range" min="100" max="400" step="10" value="200" id="wtp-fam" oninput="updateWTP()">
+        <span class="slider-val" id="wtp-fam-out">¥200</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Young adults</span>
+        <input type="range" min="100" max="400" step="10" value="260" id="wtp-young" oninput="updateWTP()">
+        <span class="slider-val" id="wtp-young-out">¥260</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">School groups</span>
+        <input type="range" min="100" max="400" step="10" value="150" id="wtp-school" oninput="updateWTP()">
+        <span class="slider-val" id="wtp-school-out">¥150</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Int'l tourists</span>
+        <input type="range" min="100" max="400" step="10" value="320" id="wtp-tour" oninput="updateWTP()">
+        <span class="slider-val" id="wtp-tour-out">¥320</span>
+      </div>
+      <hr class="divider">
+      <div class="row-between">
+        <span style="font-size:14px;color:var(--text-muted);">Blended optimal price</span>
+        <span class="price-big" id="blended-price">¥228</span>
+      </div>
+    </div>
+
+    <div class="section-title">Price sensitivity insights</div>
+    <div class="card" style="font-size:14px;line-height:1.8;color:var(--text-muted);">
+      <p>International tourists exhibit the highest price inelasticity, tolerating premiums up to <strong style="color:var(--text)">40% above baseline</strong> during peak periods. Families are the most volume-sensitive segment — bundle deals (e.g. family pass + F&B voucher) outperform flat discounts by <strong style="color:var(--text)">2.3×</strong> in conversion. School groups respond best to advance-booking discounts with <strong style="color:var(--text)">≥14 day lead time</strong>.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 4 — SETTINGS
+  ═══════════════════════════════════════════ -->
+  <div class="panel" id="tab-settings">
+
+    <div class="section-title">Platform modules</div>
+    <div class="card">
+      <div class="toggle-row"><span class="toggle-label">Dynamic pricing engine</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Weather data integration</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Competitor price monitoring</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">NLP report generation</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">GenAI pricing copilot</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><span class="toggle-label">Real-time crowd alerts</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+
+    <div class="section-title">Pricing guardrails</div>
+    <div class="card">
+      <div class="slider-row">
+        <span class="slider-label">Min ticket price</span>
+        <input type="range" min="80" max="200" step="10" value="120" id="min-price" oninput="document.getElementById('min-p-out').textContent='¥'+this.value">
+        <span class="slider-val" id="min-p-out">¥120</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Max ticket price</span>
+        <input type="range" min="200" max="600" step="10" value="380" id="max-price" oninput="document.getElementById('max-p-out').textContent='¥'+this.value">
+        <span class="slider-val" id="max-p-out">¥380</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Max daily surge</span>
+        <input type="range" min="5" max="50" step="5" value="20" id="surge" oninput="document.getElementById('surge-out').textContent=this.value+'%'">
+        <span class="slider-val" id="surge-out">20%</span>
+      </div>
+    </div>
+
+    <div class="section-title">About</div>
+    <div class="card" style="font-size:13px;color:var(--text-muted);line-height:1.8;">
+      <p><strong style="color:var(--text)">ParkIQ</strong> — AI-Driven Smart Pricing Strategy Optimization</p>
+      <p>2026 Deloitte Digital Camp · Team B</p>
+      <p>Mentors: Lennon CAI; Elena XUE</p>
+      <p style="margin-top:0.5rem;">Built with Claude AI (Anthropic). Prototype for competition purposes.</p>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  /* ── Tab switching ── */
+  function switchTab(id) {
+    const ids = ['dashboard','ai','consumer','settings'];
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id==='tab-'+id));
+  }
+
+  /* ── Bar chart ── */
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const demandData = [42,38,55,60,78,95,88];
+  const priceData  = [38,35,50,55,72,92,85];
+  (function buildChart() {
+    const c = document.getElementById('chart-bars');
+    const maxD = Math.max(...demandData);
+    days.forEach((d,i) => {
+      const g = document.createElement('div');
+      g.className = 'bar-group';
+      g.innerHTML = `
+        <div class="bar-pair" style="height:130px;">
+          <div class="bar demand" style="height:${Math.round(demandData[i]/maxD*110)}px"></div>
+          <div class="bar price"  style="height:${Math.round(priceData[i]/maxD*110)}px"></div>
+        </div>
+        <div class="bar-label">${d}</div>`;
+      c.appendChild(g);
+    });
+  })();
+
+  /* ── Dashboard sliders ── */
+  const weatherLabels = ['Rainy','Cloudy','Sunny'];
+  function updateDash() {
+    const w    = parseInt(document.getElementById('weather-sl').value);
+    const h    = parseFloat(document.getElementById('holiday-sl').value);
+    const comp = parseInt(document.getElementById('comp-sl').value);
+    const cap  = parseInt(document.getElementById('cap-sl').value);
+    document.getElementById('weather-out').textContent = weatherLabels[w];
+    document.getElementById('holiday-out').textContent = h.toFixed(1)+'×';
+    document.getElementById('comp-out').textContent    = '¥'+comp;
+    document.getElementById('cap-out').textContent     = cap+'%';
+    const wMult = [0.85, 1.0, 1.15][w];
+    const capMult = 0.85 + (cap/100)*0.3;
+    const rec = Math.round(180 * h * wMult * capMult * 0.88 + comp * 0.10);
+    document.getElementById('rec-price').textContent = '¥'+rec;
+  }
+
+  /* ── WTP blended price ── */
+  function updateWTP() {
+    const vals = [
+      {id:'wtp-fam',   w:0.38},
+      {id:'wtp-young', w:0.29},
+      {id:'wtp-school',w:0.18},
+      {id:'wtp-tour',  w:0.15}
+    ];
+    let blended = 0;
+    vals.forEach(v => {
+      const val = parseInt(document.getElementById(v.id).value);
+      document.getElementById(v.id+'-out').textContent = '¥'+val;
+      blended += val * v.w;
+    });
+    document.getElementById('blended-price').textContent = '¥'+Math.round(blended*0.88);
+  }
+
+  /* ── API key ── */
+  let apiKey = '';
+  function saveKey() {
+    apiKey = document.getElementById('api-key-input').value.trim();
+    if (apiKey) {
+      document.querySelector('.api-banner').style.background = '#E1F5EE';
+      document.querySelector('.api-banner').style.borderColor = '#0F6E56';
+      document.querySelector('.api-banner').style.color = '#0F6E56';
+      document.querySelector('.api-banner span').textContent = '✓ API key saved';
+    }
+  }
+
+  /* ── AI recommendation ── */
+  async function generateRecommendation() {
+    const key = apiKey || document.getElementById('api-key-input').value.trim();
+    if (!key) {
+      alert('Please enter your Anthropic API key first.');
+      return;
+    }
+    const btn = document.getElementById('gen-btn');
+    const out = document.getElementById('ai-output');
+    const dayType = document.getElementById('day-type').value;
+    const weather = document.getElementById('weather-ai').value;
+    const crowd   = document.getElementById('crowd-sl').value;
+    const season  = document.getElementById('season-out').textContent;
+    const comp    = document.getElementById('comp-ai-out').textContent;
+
+    btn.disabled = true;
+    out.className = 'ai-output loading';
+    out.textContent = 'Generating recommendation from Claude AI...';
+
+    const prompt = `You are an AI pricing strategist for a theme park in China. Given the conditions below, provide a concise, quantitative pricing recommendation in 3-4 sentences. Include: (1) a specific recommended ticket price in CNY (¥), (2) a reasoning based on the inputs, and (3) one specific bundle deal suggestion.
+
+Conditions:
+- Day type: ${dayType}
+- Weather: ${weather}
+- Expected crowd capacity: ${crowd}%
+- Season: ${season}
+- Competitor price: ${comp}
+
+Be direct, specific, and quantitative.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 300,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content?.map(b => b.text||'').join('') || 'No response received.';
+      out.className = 'ai-output';
+      out.textContent = text;
+    } catch(e) {
+      out.className = 'ai-output';
+      out.textContent = 'Error: ' + e.message;
+    }
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>
